@@ -10,3 +10,5 @@ export const NATAL = {
   rahu: 315.683,
   ketu: 135.683,
 };
+
+export type NatalProfile = typeof NATAL;

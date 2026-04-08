@@ -131,7 +131,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <SectionLabel>Щитовидная безопасность</SectionLabel>
+        <SectionLabel>Защита щитовидной железы</SectionLabel>
         <ul className="text-sm text-ink-secondary space-y-1.5 leading-relaxed">
           <li>Йод и тирозин исключены из нутрицевтической поддержки</li>
           <li>Йодосодержащие добавки, водоросли и келп не добавляются без назначения врача</li>

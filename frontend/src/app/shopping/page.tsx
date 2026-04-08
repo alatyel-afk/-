@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import {
   buildWeekShoppingPlan,
   mondayOfWeekContaining,
@@ -50,16 +49,6 @@ export default function ShoppingWeekPage() {
           <h1 className="font-display text-hero-mobile lg:text-hero text-ink-strong tracking-[-0.03em]">
             Покупки на неделю
           </h1>
-          <p className="text-sm text-ink-secondary mt-2 max-w-2xl leading-relaxed">
-            Неделя собирается из того же движка, что и «Сегодня»: для каждого дня учитываются транзитная накшатра, титхи,
-            фаза Луны, тип дня, матрица обеда и крупа — без произвольной подмены ингредиентов. Список допустимых продуктов
-            и исключения заданы в{" "}
-            <Link href="/settings" className="font-medium text-accent hover:text-accent-dark underline-offset-2 hover:underline">
-              Настройках
-            </Link>{" "}
-            и уже заложены в расчёт. Для закупки наперёд «Самочувствие» по дням недели не подмешивается; если записать
-            симптомы на «Сегодня», обед на этот день может пересчитаться точнее.
-          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button

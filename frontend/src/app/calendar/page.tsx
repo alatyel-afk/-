@@ -62,12 +62,6 @@ export default function CalendarPage() {
 
       {err && <p className="text-semantic-danger text-sm">{err}</p>}
 
-      <p className="text-xs text-ink-secondary leading-relaxed max-w-3xl">
-        Тип дня считается так же, как на «Сегодня»: лунный день, транзиты к вашей натальной карте (D1/D9), шкалы
-        задержки/выведения/нервов/режима — девять категорий, не три. У полнолуния и новолуния узкое окно по фазе; у
-        канунов нет «половины месяца под одной меткой».
-      </p>
-
       <div className="grid grid-cols-7 gap-1 text-center">
         {WKDAYS.map((d) => (
           <div key={d} className="py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary">

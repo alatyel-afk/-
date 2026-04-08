@@ -61,7 +61,6 @@ export function buildRotatingAroma(dayType: DayType, dateStr: string, forceCalm:
       daytime_detail: "Смесь «Антистресс», 15–20 мин через аромалампу. Перегруз головы.",
       evening: "rose",
       evening_detail: `${c}, 1 капля. Вечером без стимуляции.`,
-      rotation_note: `Ротация успокаивающих масел (4): утро «${a}», вечер «${c}»; днём — готовая смесь «Антистресс».`,
     };
   }
 
@@ -80,7 +79,6 @@ export function buildRotatingAroma(dayType: DayType, dateStr: string, forceCalm:
     daytime_detail: replaceLeadingOilRu(base.daytime_detail, b),
     evening: base.evening,
     evening_detail: replaceLeadingOilRu(base.evening_detail, c),
-    rotation_note: `Ротация коллекции (8 масел: ладан, герань, роза, розмарин, левзея, ветивер, лаванда, бергамот): сегодня акценты — утро «${a}», день «${b}», вечер «${c}».`,
   };
 }
 

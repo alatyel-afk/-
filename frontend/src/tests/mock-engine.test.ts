@@ -624,7 +624,7 @@ describe("Thyroid Safety Layer", () => {
   it("thyroid safety rule trace always present", () => {
     const p = buildProtocol("2026-04-07");
     expect(p.rule_trace.thyroid_rules.length).toBeGreaterThan(0);
-    expect(p.rule_trace.thyroid_rules[0]).toContain("Щитовидная железа");
+    expect(p.rule_trace.thyroid_rules[0]).toContain("Защита щитовидной железы");
   });
 
   it("no_food_after_18 always true in protocol", () => {
@@ -662,6 +662,8 @@ describe("Integration: buildProtocol — structure", () => {
       "aroma_protocol", "movement_load", "thyroid_safety_notes",
       "body_markers_to_track", "warnings", "scales", "rule_trace",
       "moon_illumination_pct", "matrix_index", "astro_alignment",
+      "signal_protocol_ui",
+      "natal_forecast",
     ];
     for (const key of required) {
       expect(p).toHaveProperty(key);
@@ -698,15 +700,16 @@ describe("Integration: buildProtocol — structure", () => {
     expect(types).toContain(p.day_type);
   });
 
-  it("rule_trace has all 11 categories", () => {
+  it("rule_trace has all 12 categories", () => {
     const cats = [
       "day_type_rules", "scales_modifiers", "rice_rules", "breathing_rules",
       "mudra_rules", "thyroid_rules", "body_signal_rules", "meal_matrix_rules",
-      "load_rules", "aroma_rules", "alignment_rules",
+      "load_rules", "aroma_rules", "alignment_rules", "signal_protocol_engine",
     ];
     for (const c of cats) {
       expect(p.rule_trace).toHaveProperty(c);
-      expect((p.rule_trace as Record<string, string[]>)[c].length).toBeGreaterThan(0);
+      const lines = p.rule_trace[c as keyof typeof p.rule_trace];
+      expect(Array.isArray(lines) && lines.length > 0).toBe(true);
     }
   });
 

@@ -1,3 +1,5 @@
+import type { DailyProtocolUi } from "@/core/protocol/daily-protocol-ui";
+
 const BASE = "/api";
 
 function parseJson<T>(text: string, hint: string): T {
@@ -54,6 +56,12 @@ export interface LunchSpec {
 export interface SupplementSlot {
   time: string;
   items: string;
+}
+
+export interface NatalDayForecastPayload {
+  title: string;
+  tithi_label: string;
+  paragraphs: string[];
 }
 
 export interface DailyProtocol {
@@ -134,6 +142,10 @@ export interface DailyProtocol {
   matrix_index: number;
   astro_alignment: AstroAlignment;
   rule_trace: RuleTrace;
+  /** Сигнальный движок: шаблоны обеда/дыхания/нагрузки по правилам + русские тексты для UI (локальный движок; прокси может не отдать). */
+  signal_protocol_ui?: DailyProtocolUi;
+  /** Прогноз по натальной карте (профиль в коде): титхи + транзит Луны в накшатре + связка с наталом. */
+  natal_forecast?: NatalDayForecastPayload;
 }
 
 export interface AstroAlignment {
@@ -158,6 +170,8 @@ export interface RuleTrace {
   load_rules: string[];
   aroma_rules: string[];
   alignment_rules: string[];
+  /** Трассировка сигнального rule-engine (порядок правил, условия). */
+  signal_protocol_engine?: string[];
 }
 
 export interface CalendarDay {

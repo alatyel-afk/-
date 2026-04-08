@@ -16,6 +16,9 @@ import { THYROID_NOTES } from "./thyroid-safety";
 import { BREAKFAST, WEEKDAYS, buildSupplements } from "../profile/fixed-rules";
 import { interpretSignals } from "../tracking/signal-interpreter";
 import { mealMatrixLabel } from "@/lib/meal-matrix-labels";
+import { buildDailyProtocolUi } from "./daily-protocol-ui";
+import { mapBodySignalToBodySignals, buildDayContextFromSnap } from "./protocol-context";
+import { buildNatalDayForecast } from "../astrology/natal-day-forecast";
 
 const EFFECTS: Record<DayType, string> = {
   stable_day: "Тип дня без особых ограничений по протоколу — ориентир на шкалы ниже и обед по выбранной матрице.",
@@ -235,7 +238,7 @@ export function buildProtocol(dateStr: string, bodySignals?: BodySignal | null):
   if (bodySignals?.weight_kg) tracking.push(`Вес сегодня: ${bodySignals.weight_kg} кг — сравнить через 2 дня`);
 
   const lt = lunchTime(dayType);
-  const thyroidTrace = [`Щитовидная железа: консервативный режим, ${THYROID_NOTES.length} ограничений`];
+  const thyroidTrace = [`Защита щитовидной железы: консервативный режим, ${THYROID_NOTES.length} ограничений`];
 
   const alignmentRules = [
     astro.summary,
@@ -243,11 +246,29 @@ export function buildProtocol(dateStr: string, bodySignals?: BodySignal | null):
     "Рекомендации по набору продуктов (обед) строятся после этой сверки и применённых к шкалам поправок.",
   ];
 
+  const tithiLabel = tithiNameRu(snap.tithi);
+  const natal_forecast = buildNatalDayForecast(NATAL, snap, tithiLabel);
+
+  const signal_protocol_ui = buildDailyProtocolUi({
+    meta: {
+      date: dateStr,
+      weekday: WEEKDAYS[d.getDay()],
+      lunarDayNumber: snap.tithi,
+      moonPhaseLabel: moonPhaseLineRu(snap.elong, snap.illum),
+      nakshatraLabel: snap.nakshatra,
+      ekadashiFlag: snap.isEkadashi,
+      pradoshFlag: snap.isPradosh,
+    },
+    bodySignals: mapBodySignalToBodySignals(bodySignals ?? null),
+    context: buildDayContextFromSnap(snap, prevSnap),
+    hasCombinedZincSelenium: true,
+  });
+
   return {
     date: dateStr,
     weekday: WEEKDAYS[d.getDay()],
     lunar_day_number: snap.tithi,
-    tithi_name_ru: tithiNameRu(snap.tithi),
+    tithi_name_ru: tithiLabel,
     moon_phase: moonPhaseLineRu(snap.elong, snap.illum),
     nakshatra: snap.nakshatra,
     ekadashi_flag: snap.isEkadashi,
@@ -258,7 +279,7 @@ export function buildProtocol(dateStr: string, bodySignals?: BodySignal | null):
       breakfast: BREAKFAST,
       selection_assurance: buildSelectionAssurance(
         snap,
-        tithiNameRu(snap.tithi),
+        tithiLabel,
         dayType,
         astro.summary
       ),
@@ -297,6 +318,8 @@ export function buildProtocol(dateStr: string, bodySignals?: BodySignal | null):
       natal_sun: astro.natal_sun,
       transit_sun: astro.transit_sun,
     },
+    natal_forecast,
+    signal_protocol_ui,
     rule_trace: {
       day_type_rules: dtTrace,
       scales_modifiers: scalesTrace,
@@ -309,6 +332,7 @@ export function buildProtocol(dateStr: string, bodySignals?: BodySignal | null):
       load_rules: loadTrace,
       aroma_rules: aromaTrace,
       alignment_rules: alignmentRules,
+      signal_protocol_engine: signal_protocol_ui.technical.ruleTrace,
     },
   };
 }
@@ -360,3 +384,16 @@ export function getMealMatrices(): Record<string, { protein: string; vegetables:
 }
 
 export { EFFECTS };
+
+export {
+  buildDailyProtocolUi,
+  type BuildDailyProtocolInput,
+  type DailyProtocolUi,
+  type DailyMeta,
+  type DailyScores,
+  type DailyStatusBadge,
+} from "./daily-protocol-ui";
+
+export { mapBodySignalToBodySignals, buildDayContextFromSnap } from "./protocol-context";
+export { resolveDailyProtocol, sortSignalRulesByPriority } from "./rule-engine";
+export { formatSupplementsBlock, buildRussianUiProtocol } from "./protocol-ui-texts";

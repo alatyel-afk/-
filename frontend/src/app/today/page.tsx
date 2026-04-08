@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api, DailyProtocol, RuleTrace } from "@/lib/api";
+import type { DailyProtocolUi } from "@/core/protocol/daily-protocol-ui";
 import { mealMatrixLabel } from "@/lib/meal-matrix-labels";
 import { toFive } from "@/lib/utils";
 import { ScaleBar } from "@/components/ui/ScaleBar";
@@ -206,9 +207,34 @@ function TodayPageContent() {
         )}
       </section>
 
+      {proto.natal_forecast && (
+        <section className="rounded-2xl border border-sage/30 bg-gradient-to-br from-sage-soft/90 via-surface-card to-surface-card-soft shadow-[var(--shadow-premium)] overflow-hidden">
+          <div className="px-5 py-4 border-b border-sage/20 bg-sage/5">
+            <h2 className="font-display text-lg sm:text-xl text-ink-strong tracking-tight">
+              {proto.natal_forecast.title}
+            </h2>
+            <p className="text-xs text-ink-tertiary mt-1.5">
+              Транзитная Луна в накшатре «{proto.nakshatra}» · {proto.natal_forecast.tithi_label} ·{" "}
+              {proto.lunar_day_number}-й лунный день
+            </p>
+          </div>
+          <div className="px-5 py-5 space-y-4">
+            {proto.natal_forecast.paragraphs.map((p, i) => (
+              <p key={i} className="text-[15px] text-ink leading-relaxed">
+                {p}
+              </p>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ═══════════════════════════════════════════════
           2. SUMMARY METRICS
           ═══════════════════════════════════════════════ */}
+      {proto.signal_protocol_ui && (
+        <SignalProtocolSection ui={proto.signal_protocol_ui} />
+      )}
+
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard title="Риск удержания воды" value={toFive(s.water_retention_risk)} max={5}
           barColor="bg-semantic-danger" borderColor="border-l-semantic-danger"
@@ -428,13 +454,143 @@ const TRACE_SECTIONS: { key: keyof RuleTrace; label: string }[] = [
   { key: "mudra_rules", label: "Выбор мудры" },
   { key: "aroma_rules", label: "Выбор аромата" },
   { key: "load_rules", label: "Выбор нагрузки" },
-  { key: "thyroid_rules", label: "Щитовидная безопасность" },
+  { key: "thyroid_rules", label: "Защита щитовидной железы" },
+  { key: "signal_protocol_engine", label: "Сигнальный движок (правила)" },
 ];
+
+type SignalBadgeTone = DailyProtocolUi["meta"]["badges"][number]["tone"];
+
+const BADGE_TONE: Record<SignalBadgeTone, string> = {
+  neutral: "border-border bg-surface-card-soft text-ink-secondary",
+  info: "border-accent-info/35 bg-accent-info-soft text-accent-info",
+  good: "border-emerald-300/60 bg-emerald-50 text-emerald-900",
+  warning: "border-amber-300/70 bg-amber-50 text-amber-950",
+  danger: "border-red-300/70 bg-red-50 text-red-950",
+};
+
+function SignalProtocolSection({ ui }: { ui: DailyProtocolUi }) {
+  const sc = ui.scores;
+  return (
+    <section className="rounded-2xl border border-accent/25 bg-gradient-to-br from-accent-light/90 to-surface-card shadow-[var(--shadow-premium-lg)] overflow-hidden">
+      <div className="px-5 py-4 border-b border-accent/15 bg-accent/5">
+        <h2 className="font-display text-lg sm:text-xl text-ink-strong tracking-tight">
+          Сигнальный протокол
+        </h2>
+        <div className="flex flex-wrap gap-2 mt-3">
+          {ui.meta.badges.map((b, i) => (
+            <span
+              key={i}
+              className={`text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-lg border ${BADGE_TONE[b.tone]}`}
+            >
+              {b.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-5 grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
+        <div className="space-y-4 min-w-0">
+          <div>
+            <h3 className="text-base font-bold text-ink-strong">{ui.summary.title}</h3>
+            <p className="text-sm text-ink-secondary mt-2 leading-relaxed">{ui.summary.bodyEffect}</p>
+            {ui.summary.warning ? (
+              <p className="text-sm text-accent-dark font-medium mt-3 rounded-lg border border-accent/25 bg-white/60 px-3 py-2">
+                {ui.summary.warning}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="rounded-xl border border-gold/20 bg-surface-card-soft p-4 space-y-2">
+            <h4 className="text-sm font-bold text-ink">{ui.protocol.lunchTitle}</h4>
+            <pre className="text-[13px] text-ink leading-relaxed whitespace-pre-wrap font-sans">
+              {ui.protocol.lunchText}
+            </pre>
+          </div>
+
+          <div>
+            <h4 className="text-sm font-bold text-ink mb-2">Добавки (краткий список слоя)</h4>
+            <ul className="space-y-1.5 text-sm text-ink-secondary">
+              {ui.protocol.supplements.map((line, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-gold shrink-0">·</span>
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="rounded-xl border border-border p-3">
+              <h4 className="text-xs font-bold text-ink-tertiary uppercase tracking-wide mb-1">
+                {ui.protocol.breathingTitle}
+              </h4>
+              <p className="text-sm text-ink leading-relaxed">{ui.protocol.breathingText}</p>
+            </div>
+            <div className="rounded-xl border border-border p-3">
+              <h4 className="text-xs font-bold text-ink-tertiary uppercase tracking-wide mb-1">
+                {ui.protocol.loadTitle}
+              </h4>
+              <p className="text-sm text-ink leading-relaxed">{ui.protocol.loadText}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4 min-w-0">
+          <div>
+            <h4 className="text-xs font-bold text-ink-tertiary uppercase tracking-wide mb-2">
+              Оценки слоя (1–5)
+            </h4>
+            <div className="grid grid-cols-2 gap-2 text-[12px]">
+              <div className="rounded-lg bg-surface-card-soft border border-border px-2 py-1.5">
+                <span className="text-ink-faint block">Вода</span>
+                <span className="font-bold tabular-nums text-ink">{sc.waterRetentionRisk}</span>
+              </div>
+              <div className="rounded-lg bg-surface-card-soft border border-border px-2 py-1.5">
+                <span className="text-ink-faint block">Дренаж</span>
+                <span className="font-bold tabular-nums text-ink">{sc.drainagePotential}</span>
+              </div>
+              <div className="rounded-lg bg-surface-card-soft border border-border px-2 py-1.5">
+                <span className="text-ink-faint block">Нервы</span>
+                <span className="font-bold tabular-nums text-ink">{sc.nervousSystemLoad}</span>
+              </div>
+              <div className="rounded-lg bg-surface-card-soft border border-border px-2 py-1.5">
+                <span className="text-ink-faint block">Режим</span>
+                <span className="font-bold tabular-nums text-ink">{sc.rhythmPrecisionNeed}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border p-3">
+            <h4 className="text-sm font-bold text-ink mb-1">{ui.safety.thyroidSafetyTitle}</h4>
+            <p className="text-xs text-ink-secondary leading-relaxed">{ui.safety.thyroidSafetyText}</p>
+          </div>
+
+          <div className="rounded-xl border border-border p-3">
+            <h4 className="text-sm font-bold text-ink mb-2">{ui.tracking.title}</h4>
+            <ul className="space-y-1 text-xs text-ink-secondary max-h-40 overflow-y-auto">
+              {ui.tracking.markers.map((m, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-gold shrink-0">•</span>
+                  {m}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function RuleTraceBlock({ trace }: { trace: RuleTrace }) {
   const [open, setOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const toggle = (k: string) => setOpenSections((p) => ({ ...p, [k]: !p[k] }));
+
+  const sections = TRACE_SECTIONS.filter(({ key }) => {
+    const lines = trace[key];
+    return lines && lines.length > 0;
+  });
 
   return (
     <section className="premium-card rounded-xl p-4 bg-surface-card-soft">
@@ -445,9 +601,8 @@ function RuleTraceBlock({ trace }: { trace: RuleTrace }) {
       </button>
       {open && (
         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-          {TRACE_SECTIONS.map(({ key, label }) => {
-            const lines = trace[key];
-            if (!lines || lines.length === 0) return null;
+          {sections.map(({ key, label }) => {
+            const lines = trace[key]!;
             const isOpen = openSections[key] ?? false;
             return (
               <div key={key} className="rounded-lg border border-border overflow-hidden">
