@@ -1,0 +1,14 @@
+{
+  "name": "jyotish-nutrition-protocol",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w jyotish-protocol-ui",
+    "build": "npm run build -w jyotish-protocol-ui",
+    "start": "npm run start -w jyotish-protocol-ui",
+    "lint": "npm run lint -w jyotish-protocol-ui",
+    "test": "npm run test -w jyotish-protocol-ui"
+  }
+}

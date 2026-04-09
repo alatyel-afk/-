@@ -6,11 +6,25 @@
 
 Требуется **Node.js 18+**.
 
+Из **корня проекта** (рядом с этим `README.md`):
+
+```bash
+npm install
+npm run dev
+```
+
+Либо классически из каталога `frontend`:
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+
+В **PowerShell** цепочку команд пишите через точку с запятой, не через `&&`:  
+`cd frontend; npm run dev`
+
+На Windows можно открыть сайт двойным щелчком по **`Запуск-dev.bat`** в корне (после `npm install`).
 
 По умолчанию **`npm run dev`** запускает **Turbopack** (`--turbo`) — на Windows это заметно стабильнее, чем Webpack в dev: меньше битого `.next` и ошибок вроде `Cannot find module './276.js'` (из‑за них страница ошибки выглядит «чёрно‑белой» без ваших стилей). Если нужен старый бандлер: **`npm run dev:webpack`**.
 
