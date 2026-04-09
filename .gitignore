@@ -1,4 +1,4 @@
-# Dependencies
+# Dependencies & installs
 node_modules/
 .pnp/
 .pnp.js
@@ -13,12 +13,13 @@ venv/
 .pytest_cache/
 .mypy_cache/
 
-# Next.js
+# Next.js / build output
+.next/
 frontend/.next/
 frontend/out/
 frontend/.turbo/
 
-# Env (keep .env.example if you add one)
+# Secrets (keep .env.example if you add one)
 .env
 .env.local
 .env.*.local
