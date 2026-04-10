@@ -110,7 +110,7 @@ function buildBadges(meta: DailyMeta, matchedRule: SignalRuleId): DailyStatusBad
   const ruleBadgeMap: Partial<Record<SignalRuleId, DailyStatusBadge>> = {
     stable_state: { label: "Устойчивый день", tone: "neutral" },
     mental_overheat: { label: "Перегрев головы", tone: "warning" },
-    ankle_swelling: { label: "Удержание воды", tone: "danger" },
+    ankle_swelling: { label: "Удержание в тканях", tone: "danger" },
     eye_swelling: { label: "Риск отека лица", tone: "danger" },
     poor_sleep: { label: "После плохого сна", tone: "warning" },
     low_energy_no_swelling: { label: "Низкая энергия", tone: "info" },

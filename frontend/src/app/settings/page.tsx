@@ -7,6 +7,10 @@ import {
   SPECIAL_LAGNAS,
   formatSpecialLagnaRow,
 } from "@/core/profile/natal-divisions";
+import {
+  NATAL_CHART_NARRATIVE_SECTIONS,
+  NATAL_CHART_NARRATIVE_TITLE,
+} from "@/core/profile/natal-chart-narrative";
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -66,6 +70,25 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
+        <SectionLabel>{NATAL_CHART_NARRATIVE_TITLE}</SectionLabel>
+        <p className="text-xs text-ink-secondary leading-relaxed mb-4">
+          Текст отражает зашитую в приложение карту и задаёт смысл шкал и обеда: удержание и тяжесть как ответ системы на ритм и нагрузку, а не «лишняя вода» абстрактно. Расчёт на «Сегодня» по-прежнему строится на транзитах, титхи и матрице; при необходимости сверяйте D9 и спец. лагны ниже.
+        </p>
+        <div className="space-y-6 max-h-[min(70vh,720px)] overflow-y-auto pr-1 border-t border-border/60 pt-4">
+          {NATAL_CHART_NARRATIVE_SECTIONS.map((sec) => (
+            <div key={sec.heading}>
+              <h3 className="text-sm font-bold text-ink-strong mb-2">{sec.heading}</h3>
+              {sec.paragraphs.map((p, i) => (
+                <p key={i} className="text-sm text-ink leading-relaxed mb-3 last:mb-0">
+                  {p}
+                </p>
+              ))}
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
         <SectionLabel>Навамша (D9) и специальные лагны</SectionLabel>
         <p className="text-xs text-ink-secondary leading-relaxed mb-4">{NAVAMSA_D9_NOTICE}</p>
         <p className="text-sm font-medium text-ink mb-2">Special Lagnas</p>
@@ -95,7 +118,10 @@ export default function SettingsPage() {
       <Card>
         <SectionLabel>Фиксированные правила питания</SectionLabel>
         <ul className="text-sm text-ink space-y-2 leading-relaxed">
-          <li>Завтрак: 1 яйцо с жидким желтком, банан или 2 финика, 5 черри, 25–30 г листового салата, кофе со специями</li>
+          <li>
+            Завтрак 08:00–10:00: 1 яйцо с жидким желтком, банан или 2 финика, 5 черри, 25–30 г листового салата; кофе после еды — кардамон, гвоздика, молотый чёрный перец, мускатный орех, корица
+          </li>
+          <li className="text-ink-secondary">Основной приём пищи — обед в окне 13:00–15:00 (в прадош и др. «ранних» днях — 12:30–14:00 или уже по расчёту на «Сегодня»)</li>
           <li>Только 1 яйцо в день, только на завтрак</li>
           <li>После 18:00 еды нет</li>
           <li className="text-ink-secondary">

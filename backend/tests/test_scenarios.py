@@ -170,7 +170,7 @@ def test_meal_ekadashi_no_meat():
 # ── 16. Meal: rice matrix always mentions rice ──
 
 def test_meal_rice_matrix_has_rice():
-    grain_markers = ("рис", "греч", "чечевиц", "паста", "ячн", "макар")
+    grain_markers = ("рис", "греч", "чечевиц", "паста", "ячн")
     for doy in range(1, 366):
         m = pick_meal(MealMatrix.F_RICE, doy)
         low = m.full_description.lower()

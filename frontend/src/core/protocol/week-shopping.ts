@@ -80,7 +80,7 @@ function bump(map: Map<string, number>, key: string) {
   map.set(k, (map.get(k) ?? 0) + 1);
 }
 
-/** Запятые внутри круглых скобок не разделяют позиции (напр. «укроп/петрушка, без кинзы»). */
+/** Запятые внутри круглых скобок не разделяют позиции (напр. уточнение к зелени в скобках). */
 export function splitCommaOutsideParens(s: string): string[] {
   const out: string[] = [];
   let depth = 0;
@@ -102,10 +102,11 @@ export function splitCommaOutsideParens(s: string): string[] {
   return out;
 }
 
-/** В сводке покупок не дублируем напоминание про кинзу — в протоколе оно уже зафиксировано. */
+/** В сводке покупок убираем повторяющееся уточнение «(укроп/петрушка)» из строк овощей — зелень и так в списке отдельно. */
 export function stripGreensCilantroNoteForShopping(s: string): string {
   return s
     .replace(/\s*\(\s*укроп\/петрушка\s*,\s*без кинзы\s*\)/gi, "")
+    .replace(/\s*\(\s*укроп\/петрушка\s*\)/gi, "")
     .replace(/\s+/g, " ")
     .trim();
 }

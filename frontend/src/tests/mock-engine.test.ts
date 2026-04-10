@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { buildProtocol, buildCalendarMonth, getMealMatrices, _testing as T } from "@/lib/mock-engine";
 import { tithiNameRu } from "@/core/astrology/tithi-names";
+import { isRiktaTithi, natalBirthTithiNumber } from "@/core/astrology/rikta-tithi";
+import { NATAL } from "@/core/profile/natal-profile";
 import type { BodySignal } from "@/lib/api";
 
 // ═══════════════════════════════════════════════════════════
@@ -21,6 +23,22 @@ describe("Unit: elongation", () => {
   });
   it("never returns negative", () => {
     expect(T.elongation(100, 50)).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe("Unit: rikta tithi", () => {
+  it("marks 4,9,14,19,24,29 as rikta", () => {
+    expect(isRiktaTithi(4)).toBe(true);
+    expect(isRiktaTithi(14)).toBe(true);
+    expect(isRiktaTithi(29)).toBe(true);
+    expect(isRiktaTithi(5)).toBe(false);
+    expect(isRiktaTithi(15)).toBe(false);
+  });
+
+  it("NATAL profile birth tithi from Sun/Moon longitudes is rikta", () => {
+    const n = natalBirthTithiNumber(NATAL);
+    expect(n).toBe(4);
+    expect(isRiktaTithi(n)).toBe(true);
   });
 });
 
@@ -488,6 +506,12 @@ describe("Unit: lunchTime", () => {
   it("drainage → early", () => expect(T.lunchTime("drainage_day").early).toBe(true));
   it("stable → not early", () => expect(T.lunchTime("stable_day").early).toBe(false));
   it("caution → early", () => expect(T.lunchTime("caution_day").early).toBe(true));
+  it("stable → main window 13:00–15:00", () => {
+    expect(T.lunchTime("stable_day").window).toBe("13:00–15:00");
+  });
+  it("pradosh → early window 12:30–14:00", () => {
+    expect(T.lunchTime("pradosh_day").window).toBe("12:30–14:00");
+  });
 });
 
 // ── Supplements ────────────────────────────────────────────
@@ -716,6 +740,26 @@ describe("Integration: buildProtocol — structure", () => {
   it("breakfast is always fixed", () => {
     expect(p.nutrition.breakfast).toContain("яйцо");
     expect(p.nutrition.breakfast).toContain("нутрицевтик");
+  });
+
+  it("natal forecast omits birth tithi / rikta intro and moderate moon-separation line", () => {
+    const p = buildProtocol("2026-04-07");
+    const text = p.natal_forecast!.paragraphs.join(" ").toLowerCase();
+    expect(text).not.toContain("по долготам солнца и луны");
+    expect(text).not.toContain("титхи рождения");
+    expect(text).not.toContain("между натальной и сегодняшней луной");
+  });
+
+  it("signal protocol lunch text matches canonical nutrition lunch (same window, plate, rice)", () => {
+    const p = buildProtocol("2026-04-07");
+    const sig = p.signal_protocol_ui!.protocol.lunchText;
+    expect(sig).toContain(p.nutrition.lunch.time_window);
+    expect(sig).toContain(p.nutrition.lunch.full_description);
+    if (p.nutrition.rice.allowed) {
+      expect(sig).toContain("Крупа: можно");
+    } else {
+      expect(sig).toContain("сегодня без крупы");
+    }
   });
 
   it("moon illumination is percentage 0-100", () => {

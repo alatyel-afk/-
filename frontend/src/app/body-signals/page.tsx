@@ -354,7 +354,7 @@ function BodySignalsPageContent() {
                 )}
                 {h.water_retention_risk != null && (
                   <div className="space-y-1">
-                    <ScaleBar label="Задержка воды" value={toFive(h.water_retention_risk)} />
+                    <ScaleBar label="Удержание в тканях" value={toFive(h.water_retention_risk)} />
                     {h.release_drainage_potential != null && <ScaleBar label="Выведение" value={toFive(h.release_drainage_potential)} />}
                     {h.nervous_system_load != null && <ScaleBar label="Нервная нагрузка" value={toFive(h.nervous_system_load)} />}
                   </div>

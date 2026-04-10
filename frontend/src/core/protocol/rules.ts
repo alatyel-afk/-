@@ -87,7 +87,7 @@ export function resolveDayType(scales: Scales, snap: Snap, prevReduction: boolea
     );
     return { dayType: "pre_new_moon_precision_day", trace };
   }
-  if (scales.water_retention_risk >= 72 && scales.nervous_system_load >= 68) { trace.push(`Задержка воды (${scales.water_retention_risk}) и нервная нагрузка (${scales.nervous_system_load}) одновременно высокие — день повышенного внимания`); return { dayType: "caution_day", trace }; }
+  if (scales.water_retention_risk >= 72 && scales.nervous_system_load >= 68) { trace.push(`Удержание в тканях (${scales.water_retention_risk}) и нервная нагрузка (${scales.nervous_system_load}) одновременно высокие — день повышенного внимания`); return { dayType: "caution_day", trace }; }
   if (scales.nervous_system_load >= 75 || scales.need_for_rhythm_precision >= 78) { trace.push(`Нервная нагрузка (${scales.nervous_system_load}) или важность режима (${scales.need_for_rhythm_precision}) критически высокие — нервная система под нагрузкой`); return { dayType: "high_sensitivity_day", trace }; }
   if (scales.release_drainage_potential >= 72 && scales.water_retention_risk <= 55) { trace.push(`Хороший потенциал выведения (${scales.release_drainage_potential}) при низкой задержке (${scales.water_retention_risk}) — день выведения воды`); return { dayType: "drainage_day", trace }; }
   trace.push("Нет особых факторов — устойчивый тип дня по шкалам");

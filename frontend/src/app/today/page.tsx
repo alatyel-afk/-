@@ -21,12 +21,12 @@ function fmt(d: string) {
 const metricNote = (kind: string, v: number): string => {
   const notes: Record<string, string[]> = {
     retention: [
-      "Нет риска",
-      "Тело легко отдаёт воду",
-      "Небольшой риск задержки",
-      "Заметный риск удержания",
-      "Высокий риск отёков",
-      "Максимальная задержка",
+      "Нет сигнала удержания",
+      "Ткани легко отдают жидкость",
+      "Лёгкий риск удержания",
+      "Заметное удержание в тканях",
+      "Сильный ответ системы (отёчность)",
+      "Максимальное удержание",
     ],
     drainage: [
       "Окно закрыто",
@@ -220,13 +220,22 @@ function TodayPageContent() {
           </div>
           <div className="px-5 py-5 space-y-4">
             {proto.natal_forecast.paragraphs.map((p, i) => (
-              <p key={i} className="text-[15px] text-ink leading-relaxed">
+              <p key={i} className="text-[15px] text-ink leading-relaxed whitespace-pre-line">
                 {p}
               </p>
             ))}
           </div>
         </section>
       )}
+
+      <p className="text-center">
+        <Link
+          href="/settings"
+          className="text-xs text-ink-tertiary hover:text-accent font-medium transition-colors"
+        >
+          Логика карты: два контура и питание — в «Настройках»
+        </Link>
+      </p>
 
       {/* ═══════════════════════════════════════════════
           2. SUMMARY METRICS
@@ -236,7 +245,7 @@ function TodayPageContent() {
       )}
 
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard title="Риск удержания воды" value={toFive(s.water_retention_risk)} max={5}
+        <MetricCard title="Удержание в тканях" value={toFive(s.water_retention_risk)} max={5}
           barColor="bg-semantic-danger" borderColor="border-l-semantic-danger"
           note={metricNote("retention", toFive(s.water_retention_risk))} />
         <MetricCard title="Окно для выведения" value={toFive(s.release_drainage_potential)} max={5}
@@ -263,7 +272,7 @@ function TodayPageContent() {
             <h2 className="text-card-title text-ink-strong mb-3">Что происходит с телом</h2>
             <p className="text-[15px] text-ink leading-relaxed">{proto.body_effect_summary}</p>
             <div className="mt-4 space-y-2.5">
-              <ScaleBar label="Удержание воды" value={toFive(s.water_retention_risk)} />
+              <ScaleBar label="Удержание в тканях" value={toFive(s.water_retention_risk)} />
               <ScaleBar label="Потенциал выведения" value={toFive(s.release_drainage_potential)} />
               <ScaleBar label="Напряжение нервной системы" value={toFive(s.nervous_system_load)} />
               <ScaleBar label="Требуемая точность режима" value={toFive(s.need_for_rhythm_precision)} />
@@ -542,7 +551,7 @@ function SignalProtocolSection({ ui }: { ui: DailyProtocolUi }) {
             </h4>
             <div className="grid grid-cols-2 gap-2 text-[12px]">
               <div className="rounded-lg bg-surface-card-soft border border-border px-2 py-1.5">
-                <span className="text-ink-faint block">Вода</span>
+                <span className="text-ink-faint block">Удержание</span>
                 <span className="font-bold tabular-nums text-ink">{sc.waterRetentionRisk}</span>
               </div>
               <div className="rounded-lg bg-surface-card-soft border border-border px-2 py-1.5">

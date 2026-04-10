@@ -41,7 +41,7 @@ const RULE_TITLE_RU: Partial<Record<SignalRuleId, string>> = {
   eye_swelling: "День при отёке зоны глаз",
   poor_sleep: "После беспокойного сна",
   low_energy_no_swelling: "Мало сил без отёков",
-  low_energy_with_swelling: "Мало сил на фоне удержания воды",
+  low_energy_with_swelling: "Мало сил на фоне удержания в тканях",
   ekadashi_day: "Экадаши",
   day_after_ekadashi: "День после экадаши",
   pradosh_day: "Прадош",
@@ -65,7 +65,7 @@ const RULE_BODY_RU: Partial<Record<SignalRuleId, string>> = {
   low_energy_no_swelling:
     "Сил мало, отёков нет — допускается малая порция риса по шаблону, без самодеятельности.",
   low_energy_with_swelling:
-    "Слабость на фоне удержания воды — без риса и плотных тарелок, только шаблон удержания.",
+    "Слабость на фоне удержания в тканях — без риса и плотных тарелок, только шаблон удержания.",
   ekadashi_day: "День уменьшения объёма — без компенсации тяжёлой едой вечером.",
   day_after_ekadashi: "Мягкий выход после разгрузки — без «наградного» обеда.",
   pradosh_day: "Собранный день: ранний обед по шаблону, без гарнира и без отката.",
@@ -114,6 +114,28 @@ function formatLunchItemsRu(templateId: LunchTemplateId): string {
   const meat =
     t.meatAllowed === false ? "Мясо/рыба в этом шаблоне не предусмотрены." : "";
   return [`Окно обеда: ${t.timeWindow}.`, "", ...lines, "", rice, meat].filter(Boolean).join("\n");
+}
+
+/** Текст обеда для UI — тот же источник, что и `nutrition.lunch` (матрица дня), не шаблоны rule-engine. */
+export function formatCanonicalLunchForSignalUi(input: {
+  timeWindow: string;
+  matrixLabel: string;
+  fullDescription: string;
+  riceAllowed: boolean;
+  riceReason?: string;
+}): string {
+  const riceLine = input.riceAllowed
+    ? `Крупа: можно${input.riceReason ? ` — ${input.riceReason}` : ""}.`
+    : `Крупа: сегодня без крупы${input.riceReason ? ` — ${input.riceReason}` : ""}.`;
+  return [
+    `Окно обеда: ${input.timeWindow}.`,
+    "",
+    input.matrixLabel,
+    "",
+    input.fullDescription.trim(),
+    "",
+    riceLine,
+  ].join("\n");
 }
 
 export function buildRussianUiProtocol(input: BuildRussianUiProtocolInput): RussianUiProtocolTexts {

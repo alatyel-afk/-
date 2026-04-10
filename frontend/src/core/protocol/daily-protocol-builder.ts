@@ -17,13 +17,17 @@ import { BREAKFAST, WEEKDAYS, buildSupplements } from "../profile/fixed-rules";
 import { interpretSignals } from "../tracking/signal-interpreter";
 import { mealMatrixLabel } from "@/lib/meal-matrix-labels";
 import { buildDailyProtocolUi } from "./daily-protocol-ui";
+import { formatCanonicalLunchForSignalUi } from "./protocol-ui-texts";
 import { mapBodySignalToBodySignals, buildDayContextFromSnap } from "./protocol-context";
 import { buildNatalDayForecast } from "../astrology/natal-day-forecast";
 
 const EFFECTS: Record<DayType, string> = {
-  stable_day: "Тип дня без особых ограничений по протоколу — ориентир на шкалы ниже и обед по выбранной матрице.",
-  drainage_day: "Хороший день для выведения лишней воды. Обед ранний и лёгкий, больше движения, без обезвоживания.",
-  caution_day: "Одновременно высокий риск отёков и перегруз нервной системы. Обед лёгкий, без гарнира, нагрузку снизить.",
+  stable_day:
+    "Устойчивый день по календарю: ориентир на шкалы ниже и обед по матрице. Удержание жидкости в этой карте — не «лишняя вода сама по себе», а ответ телесного контура на ритм и нагрузку; подробнее — блок «Логика карты» в настройках.",
+  drainage_day:
+    "День, когда телу проще отдать лишнее без агрессии к жидкости: ранний лёгкий обед, движение, без обезвоживания и без форсирования «сушки».",
+  caution_day:
+    "Сочетание риска удержания в тканях и перегруза нервной системы. Обед лёгкий, без гарнира, нагрузку снизить — снимать конфликт контуров, а не «давить на воду».",
   high_sensitivity_day: "Нервная система перегружена. Обед проще, порции меньше, дыхание на успокоение.",
   ekadashi_day: "Экадаши — обед без мяса, порции меньше. Горячая вода, дыхание. Не голодать до срыва вечером.",
   pradosh_day: "Прадош — ранний обед с мясом, но без гарнира. Вечером не компенсировать усталость едой.",
@@ -249,7 +253,7 @@ export function buildProtocol(dateStr: string, bodySignals?: BodySignal | null):
   const tithiLabel = tithiNameRu(snap.tithi);
   const natal_forecast = buildNatalDayForecast(NATAL, snap, tithiLabel);
 
-  const signal_protocol_ui = buildDailyProtocolUi({
+  const signal_protocol_ui_base = buildDailyProtocolUi({
     meta: {
       date: dateStr,
       weekday: WEEKDAYS[d.getDay()],
@@ -263,6 +267,20 @@ export function buildProtocol(dateStr: string, bodySignals?: BodySignal | null):
     context: buildDayContextFromSnap(snap, prevSnap),
     hasCombinedZincSelenium: true,
   });
+
+  const signal_protocol_ui = {
+    ...signal_protocol_ui_base,
+    protocol: {
+      ...signal_protocol_ui_base.protocol,
+      lunchText: formatCanonicalLunchForSignalUi({
+        timeWindow: lt.window,
+        matrixLabel: mealMatrixLabel(finalMatrix),
+        fullDescription: meal.full_description,
+        riceAllowed: rice.allowed,
+        riceReason: rice.reason,
+      }),
+    },
+  };
 
   return {
     date: dateStr,

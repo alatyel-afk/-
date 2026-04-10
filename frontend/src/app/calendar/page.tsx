@@ -98,7 +98,7 @@ export default function CalendarPage() {
               )}
 
               <div className="mt-auto flex items-center justify-between">
-                <div className="flex items-center gap-1" title="Задержка воды">
+                <div className="flex items-center gap-1" title="Удержание в тканях">
                   <span className={`h-1.5 w-1.5 rounded-full ${retentionDot(d.water_retention_risk)}`} />
                   <span className="text-[10px] text-ink-tertiary tabular-nums">{toFive(d.water_retention_risk)}/5</span>
                 </div>
