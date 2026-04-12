@@ -166,3 +166,21 @@ body {
   color: var(--text-muted);
   margin-bottom: 1rem;
 }
+
+/* Печать отчёта по самочувствию: без шапки и служебных кнопок */
+@media print {
+  body.jy-app > header {
+    display: none !important;
+  }
+  body.jy-app > main {
+    max-width: 100% !important;
+    padding: 0.75rem 1rem 2rem !important;
+  }
+  body.jy-app .no-print {
+    display: none !important;
+  }
+  body.jy-app {
+    background: #fff !important;
+    color: #1c1714 !important;
+  }
+}

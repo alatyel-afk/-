@@ -1,11 +1,17 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { api, BodySignal, BodySignalWithContext } from "@/lib/api";
 import { toFive } from "@/lib/utils";
 import { DayKindBadge } from "@/components/ui/DayKindBadge";
 import { ScaleBar } from "@/components/ui/ScaleBar";
+import {
+  analyzeWellbeingHistory,
+  bodySignalChangedProtocol,
+  formatHistoryReportPlainText,
+} from "@/core/tracking/wellbeing-history-analysis";
+import { mergeWellbeingHistoryWithLocal, persistWellbeingDay } from "@/lib/wellbeing-local-store";
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
@@ -73,6 +79,9 @@ function BodySignalsPageContent() {
   const [history, setHistory] = useState<BodySignalWithContext[]>([]);
   const [histErr, setHistErr] = useState("");
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyRangeDays, setHistoryRangeDays] = useState<7 | 30 | 90>(30);
+
+  const historyReport = useMemo(() => analyzeWellbeingHistory(history), [history]);
 
   useEffect(() => {
     const t = searchParams.get("tab");
@@ -114,10 +123,16 @@ function BodySignalsPageContent() {
     setSaving(true); setSaved(false);
     try {
       await api.postBodySignal(currentSignal);
-      await api.postNutritionLog({
-        day_date: date, lunch_type: lunchType || null, had_rice: hadRice,
-        heaviness, rebound_after_ekadashi_pradosh: rebound, notes: nutrNotes || null,
-      });
+      const nutr = {
+        day_date: date,
+        lunch_type: lunchType || null,
+        had_rice: hadRice,
+        heaviness,
+        rebound_after_ekadashi_pradosh: rebound,
+        notes: nutrNotes || null,
+      };
+      await api.postNutritionLog(nutr);
+      persistWellbeingDay(currentSignal, nutr);
       setSaved(true);
     } finally { setSaving(false); }
   }
@@ -131,12 +146,16 @@ function BodySignalsPageContent() {
     setHistErr("");
     setHistoryLoading(true);
     const to = todayStr();
-    const from = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const from = new Date(Date.now() - historyRangeDays * 86400000).toISOString().slice(0, 10);
     let cancelled = false;
     api
       .getHistory(from, to)
       .then((rows) => {
-        if (!cancelled) setHistory(Array.isArray(rows) ? rows : []);
+        if (cancelled) return;
+        const apiRows = Array.isArray(rows) ? rows : [];
+        const merged = mergeWellbeingHistoryWithLocal(apiRows);
+        const filtered = merged.filter((r) => r.signal.day_date >= from && r.signal.day_date <= to);
+        setHistory(filtered);
       })
       .catch((e) => {
         if (!cancelled) setHistErr(e instanceof Error ? e.message : String(e));
@@ -147,7 +166,42 @@ function BodySignalsPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [tab]);
+  }, [tab, historyRangeDays]);
+
+  function downloadHistoryJson() {
+    const to = todayStr();
+    const from = new Date(Date.now() - historyRangeDays * 86400000).toISOString().slice(0, 10);
+    const payload = {
+      exported_at: new Date().toISOString(),
+      from_date: from,
+      to_date: to,
+      range_days: historyRangeDays,
+      rows: history,
+      analysis: historyReport,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `samochuvstvie-${from}_${to}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadReportTxt() {
+    const text = formatHistoryReportPlainText(historyReport);
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `otchet-samochuvstvie-${historyReport.stats.fromDate || "export"}-${historyReport.stats.toDate || ""}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function printHistory() {
+    window.print();
+  }
 
   function setTabAndUrl(next: "input" | "history") {
     setTab(next);
@@ -167,12 +221,12 @@ function BodySignalsPageContent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-semibold tracking-tight text-ink-strong">
+      <h1 className="font-display text-2xl font-semibold tracking-tight text-ink-strong print:hidden">
         Самочувствие
       </h1>
 
       {/* Tab switcher */}
-      <div className="flex items-center gap-1 p-1 rounded-xl w-fit bg-gold-soft/60 ring-1 ring-gold/25">
+      <div className="no-print flex items-center gap-1 p-1 rounded-xl w-fit bg-gold-soft/60 ring-1 ring-gold/25">
         {(["input", "history"] as const).map((t) => {
           const active = tab === t;
           return (
@@ -186,7 +240,7 @@ function BodySignalsPageContent() {
                   : "text-ink-secondary hover:bg-surface-card hover:text-ink"
               }`}
             >
-              {t === "input" ? "Записать" : "История за 30 дней"}
+              {t === "input" ? "Записать" : "История и отчёт"}
             </button>
           );
         })}
@@ -321,28 +375,121 @@ function BodySignalsPageContent() {
 
       {tab === "history" && (
         <div key="tab-history" className="space-y-4">
-          <h2 className="text-lg font-semibold text-ink">
-            Самочувствие за последние 30 дней
-          </h2>
-          {histErr && <p className="text-semantic-danger text-sm">{histErr}</p>}
-          {historyLoading && (
-            <p className="text-ink-secondary text-sm py-6">Загрузка истории…</p>
-          )}
-          {!historyLoading && history.length === 0 && !histErr && (
-            <p className="text-ink-tertiary text-sm py-6 text-center">
-              Записей пока нет. Заполните самочувствие на вкладке «Записать».
-            </p>
-          )}
-          {!historyLoading &&
+          <div className="no-print flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-ink-secondary">Период:</span>
+              {([7, 30, 90] as const).map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setHistoryRangeDays(d)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    historyRangeDays === d
+                      ? "bg-accent text-white"
+                      : "bg-gold-soft/80 text-ink-secondary ring-1 ring-gold/30 hover:bg-gold-soft"
+                  }`}
+                >
+                  {d} дн.
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={printHistory}
+                className="rounded-xl border border-border bg-surface-card px-4 py-2 text-sm font-medium text-ink hover:bg-surface-card-soft"
+              >
+                Печать
+              </button>
+              <button
+                type="button"
+                onClick={downloadHistoryJson}
+                disabled={historyLoading}
+                className="rounded-xl border border-accent/40 bg-accent-light px-4 py-2 text-sm font-medium text-accent-dark hover:bg-accent/10 disabled:opacity-40"
+              >
+                Сохранить JSON
+              </button>
+              <button
+                type="button"
+                onClick={downloadReportTxt}
+                disabled={historyLoading}
+                className="rounded-xl border border-sage/40 bg-sage-soft/80 px-4 py-2 text-sm font-medium text-sage hover:bg-sage-soft disabled:opacity-40"
+              >
+                Отчёт TXT
+              </button>
+            </div>
+          </div>
+
+          <p className="no-print text-xs text-ink-tertiary">
+            Записи дублируются в браузере (localStorage), чтобы история не пропала при перезапуске сервера. JSON — полный выгруз с анализом; TXT — текст отчёта для врача или дневника.
+          </p>
+
+          <div id="wellbeing-print-area" className="space-y-6 print:space-y-4">
+            <div className="hidden print:block print:mb-4">
+              <p className="font-display text-xl font-semibold text-ink-strong">Самочувствие — отчёт</p>
+              <p className="text-sm text-ink-secondary">
+                Сформировано: {new Date().toLocaleString("ru-RU")} · период: последние {historyRangeDays} дн.
+              </p>
+            </div>
+
+            <h2 className="text-lg font-semibold text-ink print:text-base">
+              Самочувствие за последние {historyRangeDays} дней
+            </h2>
+
+            {histErr && <p className="text-semantic-danger text-sm">{histErr}</p>}
+            {historyLoading && (
+              <p className="text-ink-secondary text-sm py-6">Загрузка истории…</p>
+            )}
+
+            {!historyLoading && history.length > 0 && (
+              <div className="premium-card rounded-2xl p-5 space-y-4 print:border print:shadow-none print:p-4">
+                <h3 className="section-title print:text-xs">Анализ и рекомендации</h3>
+                <div className="space-y-3 text-sm text-ink leading-relaxed">
+                  <div>
+                    <p className="font-medium text-ink-strong mb-1.5">Выводы по истории</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {historyReport.insights.map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-medium text-ink-strong mb-1.5">Вес и контур тела</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {historyReport.weightRecommendations.map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-medium text-ink-strong mb-1.5">Эмоциональный фон</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      {historyReport.emotionRecommendations.map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!historyLoading && history.length === 0 && !histErr && (
+              <p className="text-ink-tertiary text-sm py-6 text-center">
+                Записей пока нет. Заполните самочувствие на вкладке «Записать».
+              </p>
+            )}
+
+            {!historyLoading &&
             history.map((h, idx) => {
             const ov = signalSummary(h.signal);
+            const changed = bodySignalChangedProtocol(h.signal);
             return (
-              <div key={h.signal?.day_date ?? idx} className="premium-card rounded-2xl p-5 space-y-3">
+              <div key={h.signal?.day_date ?? idx} className="premium-card rounded-2xl p-5 space-y-3 print:break-inside-avoid print:border print:shadow-none">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-ink">{h.signal.day_date}</span>
                   <div className="flex gap-2 items-center">
                     {h.day_kind && <DayKindBadge kind={h.day_kind} />}
-                    {ov.length > 0 && (
+                    {changed && (
                       <span className="badge bg-accent-light text-accent">повлияло на протокол</span>
                     )}
                   </div>
@@ -386,6 +533,7 @@ function BodySignalsPageContent() {
               </div>
             );
           })}
+          </div>
         </div>
       )}
     </div>
