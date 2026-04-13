@@ -74,9 +74,18 @@ export const WEEKLY_BREAKFAST_PURCHASES: { product: string; qty: string }[] = [
   { product: "Адыгейский сыр (по желанию)", qty: "до ≈210–280 г (по 30–40 г) или реже" },
 ];
 
+/** Пусто, только пробелы/неразрывные пробелы или только тире (плейсхолдер обеда без гарнира). */
+export function isIgnorableShoppingSidePart(s: string): boolean {
+  const collapsed = s.replace(/\s+/g, " ").replace(/\u00a0/g, " ").trim();
+  if (!collapsed) return true;
+  const noWs = collapsed.replace(/\s/g, "");
+  if (!noWs) return true;
+  return /^[\u2013\u2014\u002d\u2212]+$/u.test(noWs);
+}
+
 function bump(map: Map<string, number>, key: string) {
   const k = key.toLowerCase().replace(/\s+/g, " ").trim();
-  if (!k) return;
+  if (!k || isIgnorableShoppingSidePart(k)) return;
   map.set(k, (map.get(k) ?? 0) + 1);
 }
 
@@ -113,7 +122,7 @@ export function stripGreensCilantroNoteForShopping(s: string): string {
 
 /** Разбор строки гарнира: сначала по «;», затем по запятым вне скобок; специи к рису — одна строка в списке покупок. */
 export function normalizeSideKey(part: string): string {
-  const t = part.trim();
+  const t = part.replace(/\u00a0/g, " ").trim();
   if (!t) return t;
   if (/специи к варёному рису в крупе/i.test(t)) {
     return "Специи к варёному рису в крупе: молотый чёрный перец, сушёная мята";
@@ -125,12 +134,17 @@ export function normalizeSideKey(part: string): string {
     return "Специи к варёному рису в крупе: молотый чёрный перец, сушёная мята";
   }
   const rest = stripGreensCilantroNoteForShopping(t.replace(/сушеная мята/gi, "сушёная мята"));
+  if (isIgnorableShoppingSidePart(rest)) return "";
+  /* Одна позиция в списке покупок: в матрице встречается «гречка 50 г» и «гречка 50–60 г». */
+  if (/^гречка(?=[\s,;]|$)/i.test(rest)) {
+    return "Гречка 50–60 г";
+  }
   return rest;
 }
 
-function splitSides(s: string): string[] {
+export function splitSides(s: string): string[] {
   const fixed = s.replace(/сушеная мята/gi, "сушёная мята");
-  const segments = fixed.split(";").map((x) => x.trim()).filter(Boolean);
+  const segments = fixed.split(";").map((x) => x.replace(/\u00a0/g, " ").trim()).filter(Boolean);
   const out: string[] = [];
   for (const seg of segments) {
     for (const part of splitCommaOutsideParens(seg)) {
@@ -142,6 +156,7 @@ function splitSides(s: string): string[] {
 
 function mapToSortedCounts(map: Map<string, number>): CountedLine[] {
   return [...map.entries()]
+    .filter(([line, days]) => line.trim().length > 0 && days > 0 && !isIgnorableShoppingSidePart(line))
     .map(([line, days]) => ({ line, days }))
     .sort((a, b) => b.days - a.days || a.line.localeCompare(b.line, "ru"));
 }

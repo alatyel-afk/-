@@ -170,7 +170,8 @@ export default function ShoppingWeekPage() {
           <h2 className="text-card-title text-ink mb-4">Сводка: овощи и гарниры</h2>
           <p className="text-xs text-ink-tertiary mb-3">
             Позиции из гарнира по дням; число — в скольких обедах встречается строка. Граммы в названиях не суммируются
-            автоматически.
+            автоматически. Постовые дни и плейсхолдер «—» не учитываются; «гречка 50 г» и «гречка 50–60 г» — одна строка в
+            списке (граммы не складываются).
           </p>
           <ul className="space-y-2 max-h-[28rem] overflow-y-auto pr-1">
             {plan.sidesSummary.map((s) => (
